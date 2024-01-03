@@ -1,3 +1,5 @@
+import { doesNotMatch } from "node:assert"
+
 test('testを利用してテストケースを作成する', () => {
   const result = true // テスト結果
   const expected = true // 期待値
@@ -147,3 +149,227 @@ test('should be null or undefined', () => {
   a = null // null
   expect(a == null).toBe(true)
 })
+
+
+// ▪️曖昧な結果の評価
+const hoge = () => ({ hoge: 'hogehoge', number: 0 })
+
+test('hoge return anything', () => {
+  // 期待値がnullやundefinedではないことを評価
+  expect(hoge()).toEqual(expect.anything())
+  // 期待値の一部のプロパティがnullやundefinedではないことを評価
+  expect(hoge()).toEqual({
+    hoge: 'hogehoge',
+    number: expect.anything(),
+  })
+
+  // 期待値の一部のプロパティnumberがNumber型であることを評価
+  expect(hoge()).toEqual({
+    hoge: 'hogehoge',
+    number: expect.any(Number),
+  })
+})
+
+test('0.1 + 0.2 returns 0.3', () => {
+  expect(0.1 + 0.2).toBeCloseTo(0.3) // デフォルトでは小数点以下2桁までを評価する
+})
+
+test('0.301 and 0.3 are different when numDigits is 3', () => {
+  expect(0.3 + 0.001).not.toBeCloseTo(0.3, 3) // 小数点以下3桁目まで評価する場合、9.3と0.301は等しくないと評価する
+})
+
+// ▪️数値の比較
+test('0.1 + 0.2 is greater than 0.3', () => {
+  expect(0.1 + 0.2).toBeGreaterThan(0.3)
+  expect(0.1 + 0.2 > 0.3).toBe(true)
+})
+// toBeGreaterThanOrEqual
+test('0.1 + 0.2 is greater than 0.3 or 0.1 + 0.2 equals to 0.30000000000000004', () => {
+  expect(0.1 + 0.2).toBeGreaterThanOrEqual(0.3)
+  expect(0.1 + 0.2).toBeGreaterThanOrEqual(0.30000000000000004)
+  expect(0.1 + 0.2 >= 0.3).toBe(true)
+  expect(0.1 + 0.2 >= 0.30000000000000004).toBe(true)
+})
+// toBeLessThan
+test('0.1+0.2 is less than 0.4', () => {
+  expect(0.1 + 0.2).toBeLessThan(0.4)
+  expect(0.1 + 0.2 < 0.4).toBe(true)
+})
+// toBeLessThanOrEqual
+test('0.1 + 0.2 is less than 0.4 or 0.1 + 0.2 equals to 0.30000000000000004', () => {
+  expect(0.1 + 0.2).toBeLessThanOrEqual(0.4)
+  expect(0.1 + 0.2).toBeLessThanOrEqual(0.30000000000000004)
+  expect(0.1 + 0.2 <= 0.4).toBe(true)
+  expect(0.1 + 0.2 <= 0.30000000000000004).toBe(true)
+})
+
+
+// ▪️文字列の部分一致
+const log1 = '10.0.0.3 - - [30/Jan/2023:12:20:12 +0000] "GET / HTTP/1.1" 200 615 "-" "curl/7.74.0" "-"'
+const log2 = '10.0.0.11 - - [30/Jan/2023:12:20:12 +0000] "GET / HTTP/1.1" 200 615 "-" "curl/7.74.0" "-"'
+const log3 = '10.0.0.99 - - [30/Jan/2023:12:20:12 +0000] "GET / HTTP/1.1" 200 615 "-" "curl/7.74.0" "-"'
+
+test('contains 10.0.0.3 IP address', () => {
+  expect(log1).toEqual(expect.stringContaining('10.0.0.3'))
+})
+
+test('contain IP address between 10.0.0.0 and 10.0.0.99', () => {
+  // 10.0.0.0から10.0.0.99までのIPアドレスにマッチするための正規表現
+  const expected = /^10.0.0.([1-9]?[0-9]) /
+
+  //expect.stringMatching
+  expect(log1).toEqual(expect.stringMatching(expected))
+  expect(log2).toEqual(expect.stringMatching(expected))
+  expect(log3).toEqual(expect.stringMatching(expected))
+
+  // toMatch
+  expect(log1).toMatch(expected)
+  expect(log2).toMatch(expected)
+  expect(log3).toMatch(expected)
+
+  // toBe
+  const regex = new RegExp(expected)
+  expect(regex.test(log1)).toBe(true)
+  expect(regex.test(log2)).toBe(true)
+  expect(regex.test(log3)).toBe(true)
+})
+
+// ▪️配列の部分一致
+// 配列の要素がプリミティブ型の場合
+const fruitList = ['Apple', 'Lemon', 'Orange']
+
+// 1つの要素が含まれていることを検証
+test('contains Apple in fruitList', () => {
+  expect(fruitList).toContain('Apple')
+})
+
+// 複数の要素が含まれていることを検証
+test('contains Apple and Orange in fruitList', () => {
+  expect(fruitList).toEqual(expect.arrayContaining(['Apple', 'Orange']))
+})
+
+// 配列の要素がオブジェクト型の場合
+const itemList = [
+  { name: 'Apple', price: 100 },
+  { name: 'Lemon', price: 150 },
+  { name: 'Orange', price: 120},
+]
+
+// 1つの要素が含まれていることを検証
+test('contains Apple in itemList', () => {
+  expect(itemList).toContainEqual({ name: 'Apple', price: 100})
+})
+
+// 複数の要素が含まれていることを検証
+test('contains Apple and Orange in itemList', () => {
+  expect(itemList).toEqual(
+    expect.arrayContaining([
+    { name: 'Apple', price: 100},
+    { name: 'Orange', price: 120},
+  ]),
+  )
+})
+
+// ▪️オブジェクトの部分一致
+const ciBuild = {
+  number: 1,
+  duration: 12000,
+  state: 'success',
+  triggerParameters: {
+    is_scheduled: true,
+  },
+  type:'scheduled_pipeline',
+  actor: {
+    login: 'Taka',
+  },
+}
+
+// 1つのプロパティを検証
+test('build state should be success', () => {
+  expect(ciBuild).toHaveProperty('state', 'success')
+})
+
+// ネストしたプロパティを検証
+test('actor should be Taka', () => {
+  expect(ciBuild).toHaveProperty('actor.login', 'Taka')
+})
+
+// 複数のプロパティを検証
+test('triggered by the scheduled pipeline', () => {
+  expect(ciBuild).toEqual(
+    expect.objectContaining({
+      triggerParameters:expect.objectContaining({ is_scheduled: true }),
+      type: 'scheduled_pipeline',
+    }),
+  )
+})
+
+// ▪️Userクラスを定義
+class User {
+  name: string
+  password: string
+  constructor({ name, password }: { name: string, password: string }) {
+    // passwordが6文字未満の場合Errorをthrowする
+    if (password.length < 6) throw new Error('The password length must be at least 6 characters.')
+    this.name = name
+    this.password = password
+  }
+}
+
+test('create a new user with a 6-character password', () => {
+  expect(new User({ name: 'hoge', password: '123456' })).toEqual({
+    name: 'hoge',
+    password: '123456',
+  })
+})
+
+test('throw Error when the length of password is less than 6', () => {
+  expect(() => new User({ name: 'hoge', password: '12345' })).toThrow() // Errorがthrowされたかのチェック
+  expect(() => new User({ name: 'hoge', password: '12345' })).toThrow(Error) // 型のチェック
+  expect(() => new User({ name: 'hoge', password: '12345' })).toThrow('The password length must be at least 6 characters.') // エラーメッセージのチェック
+})
+
+
+// ▪️(done関数を利用)コールバック関数の結果の評価
+const fetchDataWithCallback = callback => {
+  setTimeout(callback, 3000, 'lemon') // 3秒経ってから'lemon'という文字列を返す
+}
+
+test('return lemon', done => {
+  const callback = data => {
+    expect(data).toBe('lemon')
+  done() // テストの終了を宣言
+  }
+  fetchDataWithCallback(callback)
+})
+
+// .resolvesを利用した非同期な関数の結果の評価
+const fetchDataWithPromiseResolve = () => 
+  new Promise(resolve => setTimeout(resolve, 1000, 'lemon'))
+
+// .resolvesを利用して成功時の値を受け取る
+test('return lemon', () => {
+  return expect(fetchDataWithPromiseResolve()).resolves.toBe('lemon')
+})
+
+// async/awaitを利用
+test('return lemon with async/await', async () => {
+  await expect(fetchDataWithPromiseResolve()).resolves.toBe('lemon')
+})
+
+// .rejectsを利用した非同期な関数の結果の評価
+const fetchDataWithPromiseReject = () => 
+  new Promise((resolve,reject) => setTimeout(reject, 1000, new Error('lemon does not exist')))
+
+// .rejectsを利用して失敗時の値を受け取る
+test('failed to return lemon', () => {
+  return expect(fetchDataWithPromiseReject()).rejects.toThrow('lemon does not exist')
+})
+
+// async/awaitを利用
+test('failed to return lemon', async () => {
+  await expect(fetchDataWithPromiseReject()).rejects.toThrow('lemon does not exist')
+})
+
+
+
