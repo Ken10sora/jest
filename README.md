@@ -1,5 +1,5 @@
 # TTJ(Testing in TypeScript with Jest)
-TTJ is basic for beginners to learn Jest.
+TTJ is basic for beginners to learn Jest including me.
 
 You can learn how to test with TTJ.
 
