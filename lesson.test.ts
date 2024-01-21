@@ -19,7 +19,6 @@ describe('test Ogerpon mask', () => {
     { mask: 'Cornerstone Mask' },
     ]) ('Ogerpon should have the correct mask', ({ mask }) => {
     const result = Ogerpon.find(ogerponMask => ogerponMask.includes(mask));
-    // 期待されるマスクと実際のマスクを比較s
     expect(result).toBe(mask);
   });
 })
