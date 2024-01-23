@@ -18,7 +18,20 @@ describe('test Ogerpon mask', () => {
     { mask: 'Wellspring Mask' },
     { mask: 'Cornerstone Mask' },
     ]) ('Ogerpon should have the correct mask', ({ mask }) => {
-    const result = Ogerpon.find(ogerponMask => ogerponMask.includes(mask));
-    expect(result).toBe(mask);
-  });
+    const result = Ogerpon.find(ogerponMask => ogerponMask.includes(mask))
+    expect(result).toBe(mask)
+  })
+})
+
+const RegiSeries = ['Regirock', 'Regice', 'Registeel']
+
+describe('test RegiSeries', () => {
+  test.each([
+    { regi: 'Regirock' },
+    { regi: 'Regice'},
+    { regi: 'Registeel'},
+  ])('RegiSeries should contain rock, ice, steel', ({ regi }) => {
+    const result = RegiSeries.find(regiSeries => regiSeries.includes(regi))
+    expect(result).toBe(regi)
+  })
 })
