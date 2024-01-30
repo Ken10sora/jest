@@ -7,7 +7,6 @@ jobs: # ジョブの設定を追加
       - checkout # Githubからソースコードをチェックアウトする
       
 workflows: # ワークフローの設定を追加
-  version: 2
   test:
     jobs:
       - test
