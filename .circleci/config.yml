@@ -2,7 +2,7 @@ version: 2.1
 jobs: # ジョブの設定を追加
   test:
     docker: # エグゼキューター
-      - image: cimg/node 16.13.0
+      - image: cimg/node:16.13.0
     steps: # Jobで実行されるステップ
       - checkout # Githubからソースコードをチェックアウトする
       
